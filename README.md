@@ -1,7 +1,7 @@
 # slack_batcall
 Dev repo for Alchemy customer service Slack bot.
 
-## Latest Behavior
+## Current Behavior
 
 ### On app mentions
 1. Triggers two messages. 
