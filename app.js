@@ -9,20 +9,23 @@ const app = new App({
     socketMode: true,
 });
 
+
+// Starts app.
 (async () => {
     await app.start();
     console.log('⚡️ Bolt app started');
     getChannels();
 })();
 
-// Configure app mention to notify user and help.
+// Notify user and help channel on app mention.
 app.event('app_mention', async ({ event, context, client, say }) => {
+    const channelId = channelStore['batcall-dev1'];
+    const uid = event.user;
+    const username = await getUsername(uid);
     try {
         // Send message to help channel.
-        sendMessage(`:mega: Hey <!channel>,  just asked for help in <#${event.channel}>. This is what they said: \n \n ${event.text}`,
-            'batcall-dev1',
-            'h',
-        )
+        sendMessage(`:mega: Hey <!channel>, ${username} just asked for help in <#${event.channel}>. This is what they said: \n \n ${event.text}`,
+            channelId);
     } catch (error) {
         console.error(error);
         return;
@@ -30,20 +33,31 @@ app.event('app_mention', async ({ event, context, client, say }) => {
 
     try {
         // Notify user that they've been heard via DM.
-        sendMessage(`Now I'm sending a message to in a different channel`,
-            'batcall-dev1',
-            'h',
-        )
+        sendDirect(`Hi ${username}. I've let our help team know you tagged me, someone will be in touch shortly!`, uid);
     } catch (error) {
         console.error(error);
     }
 });
 
-// Function to get a user's username from their UID.
+// Open a DM conversation and send a direct message to user.
+async function sendDirect(text, uid) {
+    try {
+        const conversation = await app.client.conversations.open({
+            token: process.env.SLACK_BOT_TOKEN,
+            users: uid,
+        });
+        sendMessage(text, conversation.channel.id);
+    } catch (error) {
+        console.error(error);
+    }
+
+}
+
+// Get a user's username from their UID.
 async function getUsername(uid) {
     try {
         const userInfo = await app.client.users.info({
-            user: userId
+            user: uid
         });
         return userInfo.user.profile.display_name ? userInfo.user.profile.display_name : userInfo.name;
     } catch (error) {
@@ -51,11 +65,8 @@ async function getUsername(uid) {
     }
 }
 
-// Function for sending any message to any user group in any specificied channel. 
-// Pass the channel name for readability.
-async function sendMessage(text, channelName, userGroup) {
-    const mention = userGroup ? userGroup : null;
-    const channelId = channelStore[channelName];
+// Send any message to any specified channel. 
+async function sendMessage(text, channelId) {
     try {
         const res = await app.client.chat.postMessage({
             token: process.env.SLACK_BOT_TOKEN,
@@ -67,6 +78,7 @@ async function sendMessage(text, channelName, userGroup) {
     }
 }
 
+// Get all channels in the workspace into a mapping for future operations.
 async function getChannels() {
     let count = 0;
     try {
@@ -97,7 +109,5 @@ async function getChannels() {
     } catch (error) {
         console.error(error);
     }
-    console.log(channelStore);
     console.log("There are " + count + " channels");
-    console.log(channelStore['batcall-dev']);
 }
