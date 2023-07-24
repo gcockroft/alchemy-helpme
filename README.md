@@ -16,5 +16,3 @@ Dev repo for Alchemy customer service Slack bot.
     ```js
     `Hi ${username}. I've let our help team know you tagged me, someone will be in touch shortly!`
     ```
-
-    CHANGE
